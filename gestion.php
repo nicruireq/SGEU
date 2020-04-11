@@ -1,38 +1,134 @@
 <?php
-    error_reporting(E_ALL & ~E_NOTICE);
-    session_start();
-    print_r($_SESSION);
+error_reporting(E_ALL & ~E_NOTICE);
+session_start();
 
-    // si no es un usuario logeado sale...
-    if (empty($_SESSION['username']) ) {
-        session_destroy();
-        header("Location: index.php", true, 301);
-        exit();
+// si no es un usuario logeado sale...
+if (empty($_SESSION['username'])) {
+    session_destroy();
+    header("Location: index.php", true, 301);
+    exit();
+}
+
+require_once('models/encuesta.php');
+// objeto de conexion a bd
+$database = new Database();
+// para consultas de encuesta
+$encMod = new Encuesta($database);
+$encuestas = $encMod->getEncuestaAll();
+
+// comprobar datos de formularios
+
+/* array de booleanos para decidir
+       cuando se imprimen partes del formulario */
+$formViews = array(
+    'formDatosEncuesta' => false,
+);
+
+// para indicar si se produce un error
+$error = false;
+/*  Inicializar mensajes de error, 
+    si el error no se ha producido el mensaje es "" 
+*/
+$errores = array(
+    'formTitEncuesta' => "",
+    'formInsEncuesta' => ""
+);
+
+// para el formulario de seleccion de encuesta
+$selEncuesta = $_REQUEST['selEncuesta'];
+$subEncuesta = $_REQUEST['subEncuesta'];
+
+if (isset($subEncuesta)) {
+    if (isset($selEncuesta) && $selEncuesta != "") {
+        $sid = $encuestas[$selEncuesta]['IdEnc'];
+        $enc = $encMod->getEncuestaById($sid);
+        $descripcion = $enc['Descripcion'];
+        $instrucciones = $enc['Instrucciones'];
+        $formViews['formDatosEncuesta'] = true;
     }
+}
+
+// formulario edicion encuesta
+$subEditEnc = $_REQUEST['subEditEnc'];
+$encTitTxt = strip_tags($_REQUEST['encTitTxt']);
+$encInsTxt = strip_tags($_REQUEST['encInsTxt']);
+
+if (isset($subEditEnc)) {
+    // validar datos y fijar errores
+    if (trim($encTitTxt) == "" 
+            || !ctype_alnum($encTitTxt) 
+            || strlen($encTitTxt) > 120) {
+        $error = true;
+        $errores['formTitEncuesta'] = 
+            "El título incluye caracteres prohibidos o es demasiado largo";
+    }
+
+    if (trim($encInsTxt) == "" 
+            || !ctype_alnum($encInsTxt) 
+            || strlen($encInsTxt) > 500) {
+        $error = true;
+        $errores['formInsEncuesta'] = 
+            "El título incluye caracteres prohibidos o es demasiado largo";
+    }
+    // si no hay errores en los formularios
+    if ($errores['formTitEncuesta'] == "" 
+        && $errores['formInsEncuesta'] == "") {
+            $encMod->id = $sid;  //CUIDADO
+            $encMod->titulo = $encTitTxt;
+            $encMod->instrucciones = $encInsTxt;
+            $encMod->updateEncuesta();
+    }
+}
+
+
 
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <title>Gestion</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <title>Gestion</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
 </head>
+
 <body>
 
-<div class="container p-3 my-3 border">
-    <h1 class="text-center">Gestionar encuestas</h1>
-    <?php
-        echo $error;
-        print_r($errores);
-    ?>
-    <a href="logout.php">SALIR</a>
-    <!--
+    <div class="container p-3 my-3 border">
+        <h1 class="text-center">Gestionar encuestas</h1>
+        <div class="row p-3 my-3">
+            <h3>Selección de encuesta</h3>
+        </div>
+        <div class="row p-3 my-1">
+            <form action="gestion.php" method="POST" class="form-inline">
+                <div class="form-group">
+                    <label for="sEnc">Seleccione una encuesta:</label>
+                    <select name="selEncuesta" id="sEnc" class="form-control">
+                        <option value="">Seleccione una encuesta...</option>
+                        <?php
+                        for ($i = 0; $i < count($encuestas); $i++) {
+                            echo '<option value="' . $i . '">' .
+                                $encuestas[$i]['Descripcion'] .
+                                '</option>';
+                        }
+                        ?>
+                    </select>
+                    <input type="submit" name="subEncuesta" value="Editar" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+        <?php
+        if ($formViews['formDatosEncuesta']) {
+            require_once('utilities/formDatosEncuesta.php');
+        }
+        ?>
+        <a href="logout.php">SALIR</a>
+        <!--
     <form action="login.php" method="POST">
         <div class="form-group">
             <label for="user">Usuario: </label>
@@ -45,7 +141,8 @@
         <input type="submit" name="autenticar" value="Entrar" class="btn btn-primary">
     </form>
     -->
-</div>
+    </div>
 
 </body>
+
 </html>
