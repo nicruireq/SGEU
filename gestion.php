@@ -18,12 +18,6 @@ $encuestas = $encMod->getEncuestaAll();
 
 // comprobar datos de formularios
 
-/* array de booleanos para decidir
-       cuando se imprimen partes del formulario */
-$formViews = array(
-    'formDatosEncuesta' => false,
-);
-
 // para indicar si se produce un error
 $error = false;
 /*  Inicializar mensajes de error, 
@@ -34,6 +28,8 @@ $errores = array(
     'formInsEncuesta' => ""
 );
 
+require_once('utilities/formUtils.php');
+
 // para el formulario de seleccion de encuesta
 $selEncuesta = $_REQUEST['selEncuesta'];
 $subEncuesta = $_REQUEST['subEncuesta'];
@@ -42,41 +38,44 @@ if (isset($subEncuesta)) {
     if (isset($selEncuesta) && $selEncuesta != "") {
         $sid = $encuestas[$selEncuesta]['IdEnc'];
         $enc = $encMod->getEncuestaById($sid);
-        $descripcion = $enc['Descripcion'];
-        $instrucciones = $enc['Instrucciones'];
-        $formViews['formDatosEncuesta'] = true;
+        $_SESSION['idEnc'] = $sid;
+        $_SESSION['descripcion'] = $enc['Descripcion'];
+        $_SESSION['instrucciones'] = $enc['Instrucciones'];
+        // para mostrar el resto del formulario
+        $_SESSION['formDatosEncuesta'] = true;
+        
     }
 }
 
 // formulario edicion encuesta
 $subEditEnc = $_REQUEST['subEditEnc'];
-$encTitTxt = strip_tags($_REQUEST['encTitTxt']);
-$encInsTxt = strip_tags($_REQUEST['encInsTxt']);
+$encTitTxt = trim(strip_tags($_REQUEST['encTitTxt']));
+$encInsTxt = trim(strip_tags($_REQUEST['encInsTxt']));
 
 if (isset($subEditEnc)) {
     // validar datos y fijar errores
-    if (trim($encTitTxt) == "" 
-            || !ctype_alnum($encTitTxt) 
+    if ($encTitTxt == ""
             || strlen($encTitTxt) > 120) {
         $error = true;
         $errores['formTitEncuesta'] = 
             "El título incluye caracteres prohibidos o es demasiado largo";
     }
 
-    if (trim($encInsTxt) == "" 
-            || !ctype_alnum($encInsTxt) 
-            || strlen($encInsTxt) > 500) {
+    if ($encInsTxt == ""
+            || strlen($encInsTxt) > 530) {
         $error = true;
         $errores['formInsEncuesta'] = 
-            "El título incluye caracteres prohibidos o es demasiado largo";
+            "Las instrucciones incluyen caracteres prohibidos o es demasiado largo";
     }
     // si no hay errores en los formularios
     if ($errores['formTitEncuesta'] == "" 
         && $errores['formInsEncuesta'] == "") {
-            $encMod->id = $sid;  //CUIDADO
+            $encMod->id = $_SESSION['idEnc'];
             $encMod->titulo = $encTitTxt;
             $encMod->instrucciones = $encInsTxt;
             $encMod->updateEncuesta();
+            $_SESSION['descripcion'] = $encMod->titulo;
+            $_SESSION['instrucciones'] = $encMod->instrucciones;
     }
 }
 
@@ -123,7 +122,7 @@ if (isset($subEditEnc)) {
             </form>
         </div>
         <?php
-        if ($formViews['formDatosEncuesta']) {
+        if ($_SESSION['formDatosEncuesta']) {
             require_once('utilities/formDatosEncuesta.php');
         }
         ?>
