@@ -13,6 +13,7 @@ require_once('models/encuesta.php');
 require_once('models/categoria.php');
 require_once('models/subcategoria.php');
 require_once('models/pregunta.php');
+require_once('models/opcion.php');
 // objeto de conexion a bd
 $database = new Database();
 // para consultas de encuesta
@@ -35,7 +36,9 @@ $errores = array(
     'formApplyCatNom' => "",
     'formNomSubcategoria' => "",
     'formEditSubcategoria' => "",
-    'formEditPreg' => ""
+    'formEditPreg' => "",
+    'noOptions' => "",
+    'enunciadoEmpty' => ""
 );
 
 require_once('utilities/formUtils.php');
@@ -305,6 +308,46 @@ if (isset($subNewPreg)) {
     $_SESSION['showNewFormPregunta'] = true;
     $_SESSION['showEditFormPregunta'] = false;
 }
+// procesar nueva pregunta
+$numOps = $_REQUEST['numOps'];
+$enunciado = trim(strip_tags($_REQUEST['enunciado']));
+$relprof = $_REQUEST['relprof'];
+$options = array();
+if (isset($numOps)) {
+    // combrobaciones datos
+    if ($numOps == "" || $numOps < 1) {
+        $error = true;
+        $errores['noOptions'] = "No ha añadido opciones de respueta para esta pregunta";
+    } else {
+        // recuperar las opciones
+        for ($i=0; $i < $numOps; $i++) { 
+            $options[$i] = $_REQUEST['op'.($i+1)];
+        }
+    }
+
+    if ($enunciado == "" || strlen($enunciado) > 300) {
+        $error = true;
+        $errores['enunciadoEmpty'] = "Debe especificar un enunciado para la pregunta";
+    }
+
+    // guardar en bd
+    if ( !$error && ($errores['noOptions'] == "") 
+        && ($errores['enunciadoEmpty'] == "") ) {
+            // preguntas
+            $pregMod->enunciado = $enunciado;
+            $pregMod->relprof = (isset($relprof))?'1':'0';
+            $lastPreg = $pregMod->createPregunta();
+            // actualizar preguntas para la vista
+            $preguntas = $pregMod->getPreguntaByEncCatSub();
+            // opciones
+            //$lastPreg = $pregMod->lastInsertId();   //el id de la pregunta que acabamos de crear??
+            $opsMod = new Opcion($database);
+            $opsMod->pregunta = $lastPreg;
+            $opsMod->createOpcionesPregunta($options);
+            // clean
+            $_SESSION['showNewFormPregunta'] = false;
+    }
+}
 
 // eliminar pregunta
 $subDelPreg = $_REQUEST['subDelPreg'];
@@ -313,7 +356,9 @@ if (isset($subDelPreg)) {
         $error = true;
         $errores['formEditPreg'] = "Seleccione una pregunta";
     } else {
-        // codigo para eliminar
+        // codigo para eliminar pregunta
+
+        // actualizar preguntas en la vista
     }
 }
 

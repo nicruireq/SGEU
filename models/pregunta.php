@@ -41,6 +41,36 @@ class Pregunta extends Model {
         }
     }
 
+    public function createPregunta()
+    {
+        if ($this->subcategoria) {
+            $ssql = "INSERT INTO $this->table_name(Enunciado, Encuesta, RelacionProfesor, Subcategoria, Categoria, IsDeleted)
+                     VALUES (:enun,:enc,:rel,:sub,:cat,0)";
+            $stmt = $this->conn->prepare($ssql);
+            $stmt->bindValue("rel", $this->relprof, PDO::PARAM_BOOL);
+            $stmt->bindValue("enun", $this->enunciado, PDO::PARAM_STR);
+            $stmt->bindValue("enc", $this->encuesta, PDO::PARAM_INT);
+            $stmt->bindValue("sub", $this->subcategoria, PDO::PARAM_INT);
+            $stmt->bindValue("cat", $this->categoria, PDO::PARAM_INT);
+            $stmt->execute();
+        } else {
+            $ssql = "INSERT INTO $this->table_name(Enunciado, Encuesta, RelacionProfesor, Subcategoria, Categoria, IsDeleted)
+                     VALUES (:enun,:enc,:rel,NULL,:cat,0)";
+            $stmt = $this->conn->prepare($ssql);
+            $stmt->bindValue("rel", $this->relprof, PDO::PARAM_BOOL);
+            $stmt->bindValue("enun", $this->enunciado, PDO::PARAM_STR);
+            $stmt->bindValue("enc", $this->encuesta, PDO::PARAM_INT);
+            $stmt->bindValue("cat", $this->categoria, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+
+        return $this->lastInsertId();
+    }
+
+    public function lastInsertId() {
+        return $this->conn->lastInsertId();
+    }
+
 }
 
 ?>
