@@ -6,7 +6,7 @@
         <div class="form-group">
             <label for="encTit">Título: </label>
             <input type="text" name="encTitTxt" id="encTit" class="form-control" <?php echo 'value="' . $_SESSION['descripcion'] . '"'; ?>>
-            <label for="encIns">Descripción: </label>
+            <label for="encIns">Instrucciones: </label>
             <textarea name="encInsTxt" id="encIns" class="form-control"><?php echo $_SESSION['instrucciones']; ?></textarea>
             <input type="submit" name="subEditEnc" value="Aplicar cambios" class="btn btn-primary">
         </div>

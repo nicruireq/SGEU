@@ -10,6 +10,9 @@ if (empty($_SESSION['username'])) {
 }
 
 require_once('models/encuesta.php');
+require_once('models/categoria.php');
+require_once('models/subcategoria.php');
+require_once('models/pregunta.php');
 // objeto de conexion a bd
 $database = new Database();
 // para consultas de encuesta
@@ -25,11 +28,21 @@ $error = false;
 */
 $errores = array(
     'formTitEncuesta' => "",
-    'formInsEncuesta' => ""
+    'formInsEncuesta' => "",
+    'formNomCategoria' => "",
+    'formEditCategoria' => "",
+    'formNomSubcategoria' => "",
+    'formApplyCatNom' => "",
+    'formNomSubcategoria' => "",
+    'formEditSubcategoria' => "",
+    'formEditPreg' => ""
 );
 
 require_once('utilities/formUtils.php');
 
+/**************************
+ * formulario ENCUESTAS
+ **************************/
 // para el formulario de seleccion de encuesta
 $selEncuesta = $_REQUEST['selEncuesta'];
 $subEncuesta = $_REQUEST['subEncuesta'];
@@ -47,7 +60,7 @@ if (isset($subEncuesta)) {
     }
 }
 
-// formulario edicion encuesta
+// formulario EDICION ENCUESTA
 $subEditEnc = $_REQUEST['subEditEnc'];
 $encTitTxt = trim(strip_tags($_REQUEST['encTitTxt']));
 $encInsTxt = trim(strip_tags($_REQUEST['encInsTxt']));
@@ -79,7 +92,230 @@ if (isset($subEditEnc)) {
     }
 }
 
+/****************************
+ * formulario CATEGORIAS
+ ****************************/
+$catMod = new Categoria($database);
+$categorias = $catMod->getCategoriaAll();
 
+// crear nueva categoria
+$subNewCat = $_REQUEST['subNewCat'];    // boton nueva categoria
+$catNomTxt = trim(strip_tags($_REQUEST['catNomTxt']));    // campo de texto nombre categoria
+if (isset($subNewCat)) {
+    if ($catNomTxt == "" 
+        || strlen($catNomTxt) > 100) {
+            $error = true;
+            $errores['formNomCategoria'] = "Nombre de categoría no válido";
+    } else {
+    //if ($errores['formNomCategoria'] == "") {
+        $catMod->nombre = $catNomTxt;
+        $catMod->createCategoria();
+        // hay que actualizar las categorias en la vista
+        $categorias = $catMod->getCategoriaAll();
+    }
+}
+
+// editar categoria
+$subEditCat = $_REQUEST['subEditCat'];
+$catSel = $_REQUEST['catSel'];
+if (isset($subEditCat)) {
+    if ($catSel == "" || !ctype_digit($catSel)) {
+        $error = true;
+        $errores['formEditCategoria'] = "Seleccione una de las categorías";
+    } else {
+        /* permite mostrar el formulario para 
+           editar el nombre de la categoria */
+        $_SESSION['showEditboxCategoria'] = true;
+        $_SESSION['idCategoriaEditar'] = $categorias[$catSel]['IdCat'];
+    }
+}
+//  formulario adicional para editar nombre de categoria
+if ($_SESSION['showEditboxCategoria']) {
+    $subApplyCat = $_REQUEST['subApplyCat'];
+    $catEditNom = trim(strip_tags($_REQUEST['catEditNom']));
+    if (isset($subApplyCat)) {
+        if ($catEditNom == "" 
+            || strlen($catEditNom) > 100) {
+                $error = true;
+                $errores['formApplyCatNom'] = "Nombre de categoría no válido";
+        } else {
+            //update
+            $catMod->id = $_SESSION['idCategoriaEditar'];
+            $catMod->nombre = $catEditNom;
+            $catMod->updateCategoriaById();
+            // actualizar las categorias mostradas en el desplegable
+            $categorias = $catMod->getCategoriaAll();
+            // clean
+            $_SESSION['showEditboxCategoria'] = false;
+            unset($_SESSION['idCategoriaEditar']);  // PROBLEMAS?
+        }
+    }
+
+}
+
+// eliminar categoria
+$subDelCat = $_REQUEST['subDelCat'];
+if (isset($subDelCat)) {
+    if ($catSel == "" || !ctype_digit($catSel)) {
+        $error = true;
+        $errores['formEditCategoria'] = "Seleccione una de las categorías";
+    } else {
+        $actual = $categorias[$catSel];
+        $catMod->id = $actual['IdCat'];
+        $catMod->deleteCategoriaById();
+        // update categorias para vista
+    }
+}
+
+// marcar categoria como seleccionada
+$subSelCat = $_REQUEST['subSelCat'];
+if (isset($subSelCat)) {
+    if ($catSel == "" || !ctype_digit($catSel)) {
+        $error = true;
+        $errores['formEditCategoria'] = "Seleccione una de las categorías";
+    } else {
+        // guardar en el session para pasar la info entre post diferentes
+        $_SESSION['idCategoriaSelected'] = $categorias[$catSel]['IdCat'];
+        $_SESSION['nomCategoriaSelected'] = $categorias[$catSel]['NombreCat'];
+    }
+}
+
+/******************************
+ * formulario SUBCATEGORIAS
+ ******************************/
+$subcatMod = new Subcategoria($database);
+$subcatMod->categoria = $_SESSION['idCategoriaSelected'];
+$subcategorias = $subcatMod->getSubcategoriaByCat();
+
+// crear nueva subcategoria
+$subNewSubcat = $_REQUEST['subNewSubcat'];    // boton nueva subcategoria
+$subcatNomTxt = trim(strip_tags($_REQUEST['subcatNomTxt']));    // campo de texto nombre subcategoria
+if (isset($subNewSubcat)) {
+    if ($subcatNomTxt == "" 
+        || strlen($subcatNomTxt) > 100) {
+            $error = true;
+            $errores['formNomSubcategoria'] = "Nombre de subcategoría no válido";
+    } else {
+        $subcatMod->nombre = $subcatNomTxt;
+        $subcatMod->createSubcategoria();
+        // actualizar subcategorias para la vista
+        $subcategorias = $subcatMod->getSubcategoriaByCat();
+    }
+}
+
+// editar subcategoria
+$subEditSubcat = $_REQUEST['subEditSubcat'];
+$subcatSel = $_REQUEST['subcatSel'];
+if (isset($subEditSubcat)) {
+    if ($subcatSel == "" || !ctype_digit($subcatSel)) {
+        $error = true;
+        $errores['formEditSubcategoria'] = "Seleccione una de las subcategorías";
+    } else {
+        // permite mostrar el formulario para 
+        // editar el nombre de la subcategoria 
+        $_SESSION['showEditboxSubcategoria'] = true;
+        $_SESSION['idSubcategoriaEditar'] = $subcategorias[$subcatSel]['IdSub'];
+        //$_SESSION['fkSubcategoriaEditar'] = $subcategorias[$subcatSel]['Categoria'];
+    }
+}
+
+//  formulario adicional para editar nombre de subcategoria
+if ($_SESSION['showEditboxSubcategoria']) {
+    $subApplySubCat = $_REQUEST['subApplySubCat'];
+    $subcatEditNom = trim(strip_tags($_REQUEST['subcatEditNom']));
+    if (isset($subApplySubCat)) {
+        if ($subcatEditNom == "" 
+            || strlen($subcatEditNom) > 100) {
+                $error = true;
+                $errores['formApplySubcatNom'] = "Nombre de subcategoría no válido";
+        } else {
+            //update
+            $subcatMod->id = $_SESSION['idSubcategoriaEditar'];
+            $subcatMod->nombre = $subcatEditNom;
+            //$subcatMod->categoria = $_SESSION['fkSubcategoriaEditar'];
+            $subcatMod->updateSubcategoriaById();
+            // actualizar las categorias mostradas en el desplegable
+            $subcategorias = $subcatMod->getSubcategoriaByCat();
+            // clean
+            $_SESSION['showEditboxSubcategoria'] = false;
+            unset($_SESSION['idCategoriaEditar']);  // PROBLEMAS?
+            //unset($_SESSION['fkSubcategoriaEditar']);
+        }
+    }
+
+}
+
+// eliminar categoria
+$subDelSubcat = $_REQUEST['subDelSubcat'];
+if (isset($subDelSubcat)) {
+    if ($subcatSel == "" || !ctype_digit($subcatSel)) {
+        $error = true;
+        $errores['formEditSubcategoria'] = "Seleccione una de las categorías";
+    } else {
+        $actual = $subcategorias[$subcatSel];
+        $subcatMod->id = $actual['IdSub'];
+        $subcatMod->deleteSubcategoriaById();
+        // update categorias para vista
+    }
+}
+
+// marcar subcategoria como seleccionada
+$subSelSubcat = $_REQUEST['subSelSubcat'];
+if (isset($subSelSubcat)) {
+    if ($subcatSel == "" || !ctype_digit($subcatSel)) {
+        $error = true;
+        $errores['formEditSubcategoria'] = "Seleccione una de las categorías";
+    } else {
+        // guardar en el session para pasar la info entre post diferentes
+        $_SESSION['idSubcategoriaSelected'] = $subcategorias[$subcatSel]['IdSub'];
+        $_SESSION['nomSubcategoriaSelected'] = $subcategorias[$subcatSel]['NombreSub'];
+    }
+}
+
+/***************************
+ * formulario PREGUNTAS
+ ***************************/
+$pregMod = new Pregunta($database);
+// cargar preguntas
+$pregMod->encuesta = $_SESSION['idEnc'];
+$pregMod->categoria = $_SESSION['idCategoriaSelected'];
+if (!empty($_SESSION['idSubcategoriaSelected'])) {
+    $pregMod->subcategoria = $_SESSION['idSubcategoriaSelected'];
+} else {
+    $pregMod->subcategoria = null;
+}
+$preguntas = $pregMod->getPreguntaByEncCatSub();
+
+// edicion de pregunta
+$subEditPreg = $_REQUEST['subEditPreg'];
+$pregSel = $_REQUEST['pregSel'];
+if (isset($subEditPreg)) {
+    if ($pregSel == "" || !ctype_digit($pregSel)) {
+        $error = true;
+        $errores['formEditPreg'] = "Seleccione una pregunta";
+    } else {
+        $_SESSION['showEditFormPregunta'] = true;
+        $_SESSION['showNewFormPregunta'] = false;
+    }
+}
+
+// nueva pregunta
+$subNewPreg = $_REQUEST['subNewPreg'];
+if (isset($subNewPreg)) {
+    $_SESSION['showNewFormPregunta'] = true;
+    $_SESSION['showEditFormPregunta'] = false;
+}
+
+// eliminar pregunta
+$subDelPreg = $_REQUEST['subDelPreg'];
+if (isset($subDelPreg)) {
+    if ($pregSel == "" || !ctype_digit($pregSel)) {
+        $error = true;
+        $errores['formEditPreg'] = "Seleccione una pregunta";
+    } else {
+        // codigo para eliminar
+    }
+}
 
 ?>
 
@@ -117,13 +353,16 @@ if (isset($subEditEnc)) {
                         }
                         ?>
                     </select>
-                    <input type="submit" name="subEncuesta" value="Editar" class="btn btn-primary">
+                    <input type="submit" name="subEncuesta" value="Editar" class="btn-sm btn-primary">
                 </div>
             </form>
         </div>
         <?php
         if ($_SESSION['formDatosEncuesta']) {
             require_once('utilities/formDatosEncuesta.php');
+            require_once('utilities/formDatosCategoria.php');
+            require_once('utilities/formDatosSubcategoria.php');
+            require_once('utilities/formDatosPregunta.php');
         }
         ?>
         <a href="logout.php">SALIR</a>

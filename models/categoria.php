@@ -19,6 +19,29 @@ class Categoria extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function createCategoria() {
+        $ssql = "INSERT INTO $this->table_name(NombreCat, IsDeleted) 
+                    VALUES (?,0);";
+        $stmt = $this->conn->prepare($ssql);
+        return $stmt->execute(array($this->nombre));
+    }
+
+    public function deleteCategoriaById() {
+        // borrar todas las preguntas y respuestas de la categoria
+        // todas las subcategorias de la categoria
+        // y finalmente la categoria
+
+    }
+
+    public function updateCategoriaById()
+    {
+        $ssql = "UPDATE $this->table_name 
+                    SET NombreCat=? 
+                WHERE IdCat=?;";
+        $stmt = $this->conn->prepare($ssql);
+        return $stmt->execute(array($this->nombre, $this->id));
+    }
+
 }
 
 ?>

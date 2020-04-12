@@ -34,7 +34,7 @@ class Encuesta extends Model {
                     SET Descripcion=?,Instrucciones=? 
                 WHERE IdEnc=?;";
         $stmt = $this->conn->prepare($ssql);
-        $stmt->execute(array($this->titulo,
+        return $stmt->execute(array($this->titulo,
                              $this->instrucciones,
                              $this->id)
         );
