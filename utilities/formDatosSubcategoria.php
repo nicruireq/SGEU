@@ -66,16 +66,3 @@
         echo '</div';
     }
 ?>
-
-<div class="row p-3 my-1">
-    <?php
-    /*
-    if ($error && $errores['formTitEncuesta'] != "") {
-        msg_alert('formTitEncuesta');
-    }
-    if ($error && $errores['formInsEncuesta'] != "") {
-        msg_alert('formInsEncuesta');
-    }
-    */
-    ?>
-</div>

@@ -30,7 +30,12 @@ class Categoria extends Model {
         // borrar todas las preguntas y respuestas de la categoria
         // todas las subcategorias de la categoria
         // y finalmente la categoria
-
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE IdCat=:cat;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->bindValue("cat", $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function updateCategoriaById()

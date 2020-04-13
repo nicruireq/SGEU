@@ -42,8 +42,8 @@ class Pregunta extends Model {
     }
 
     public function getPreguntaBySubcat() {
-        $ssql = "SELECT * FROM $this->table_name
-                    WHERE Subcategoria=?;";
+        $ssql = "SELECT IdPreg, Enunciado FROM $this->table_name
+                    WHERE Subcategoria=? AND IsDeleted=0;";
         $stmt = $this->conn->prepare($ssql);
         $stmt->execute(array($this->subcategoria));
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -87,6 +87,24 @@ class Pregunta extends Model {
         return $stmt->execute(array(
             $this->id
         ));
+    }
+
+    public function deletePreguntaByCat() {
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE Categoria=:cat;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->bindValue("cat", $this->categoria, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function deletePreguntaBySubcat() {
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE Subcategoria=:sub;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->bindValue("sub", $this->subcategoria, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
 }

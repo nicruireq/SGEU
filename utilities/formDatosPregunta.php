@@ -45,7 +45,7 @@
     </div>
     <!-- formulario de edicion de pregunta o crear nueva -->
     <?php if ($_SESSION['showEditFormPregunta']) : ?>
-        <div>EDITAR PREGUNTA</div>
+        <div>EDITAR PREGUNTA - NO IMPLEMENTADO</div>
     <?php elseif ($_SESSION['showNewFormPregunta']) : ?>
         <div class="row p-3 my-1">
             <form action="gestion.php" method="POST" id="formNewPreg">

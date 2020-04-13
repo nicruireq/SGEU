@@ -45,10 +45,18 @@ class Subcategoria extends Model
         // y finalmente la categoria
         $ssql = "UPDATE $this->table_name
                     SET IsDeleted=1
-                WHERE IdSub=?;";
+                WHERE IdSub=:sub;";
         $stmt = $this->conn->prepare($ssql);
-        return $stmt->execute(array(
-            $this->id
-        ));
+        $stmt->bindValue("sub", $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function deleteSubcategoriaByCategoria() {
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE Categoria=:cat;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->bindValue("cat", $this->categoria, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }

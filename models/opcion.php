@@ -38,7 +38,17 @@ class Opcion extends Model {
     }
 
     public function deleteOpcionesByPreguntas($pregs) {
-        
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE Pregunta=:idpreg;";
+        $stmt = $this->conn->prepare($ssql);
+
+        $last = false;
+        for ($i=0; $i < count($pregs); $i++) { 
+            $stmt->bindValue("idpreg", $pregs[$i]['IdPreg'], PDO::PARAM_INT);
+            $last = $stmt->execute();
+        }
+        return $last;
     }
 
 }

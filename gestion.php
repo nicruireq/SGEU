@@ -99,6 +99,9 @@ if (isset($subEditEnc)) {
  * formulario CATEGORIAS
  ****************************/
 $catMod = new Categoria($database);
+$subcatMod = new Subcategoria($database);
+$pregMod = new Pregunta($database);
+$opsMod = new Opcion($database);
 $categorias = $catMod->getCategoriaAll();
 
 // crear nueva categoria
@@ -163,10 +166,27 @@ if (isset($subDelCat)) {
         $error = true;
         $errores['formEditCategoria'] = "Seleccione una de las categorías";
     } else {
-        $actual = $categorias[$catSel];
-        $catMod->id = $actual['IdCat'];
+        $idCatToDel = $categorias[$catSel]['IdCat'];
+        // borrar categoria
+        $catMod->id = $idCatToDel;
         $catMod->deleteCategoriaById();
+        // borrar subcategorias
+        $subcatMod->categoria = $idCatToDel;
+        $subcatMod->deleteSubcategoriaByCategoria();
+        // obtener preguntas de la categoria
+        $pregMod->encuesta = $_SESSION['idEnc'];
+        $pregMod->categoria = $idCatToDel;
+        $pregMod->subcategoria = null;
+        $pregsToDelOps = $pregMod->getPreguntaByEncCatSub();
+        // borrar preguntas de la categoria
+        $pregMod->deletePreguntaByCat();
+        // borrar opciones de las preguntas
+        $opsMod->deleteOpcionesByPreguntas($pregsToDelOps);
         // update categorias para vista
+        $categorias = $catMod->getCategoriaAll();
+        // limpiar selecciones actuales
+        unset($_SESSION['idCategoriaSelected']);
+        unset($_SESSION['idSubcategoriaSelected']);
     }
 }
 
@@ -186,7 +206,6 @@ if (isset($subSelCat)) {
 /******************************
  * formulario SUBCATEGORIAS
  ******************************/
-$subcatMod = new Subcategoria($database);
 $subcatMod->categoria = $_SESSION['idCategoriaSelected'];
 $subcategorias = $subcatMod->getSubcategoriaByCat();
 
@@ -248,19 +267,36 @@ if ($_SESSION['showEditboxSubcategoria']) {
 
 }
 
-// eliminar categoria
+// eliminar subcategoria
 $subDelSubcat = $_REQUEST['subDelSubcat'];
 if (isset($subDelSubcat)) {
     if ($subcatSel == "" || !ctype_digit($subcatSel)) {
         $error = true;
-        $errores['formEditSubcategoria'] = "Seleccione una de las categorías";
+        $errores['formEditSubcategoria'] = "Seleccione una de las subcategorías";
     } else {
+        // id de la subcategoria actual seleccionada
         $subcatToDel = $subcategorias[$subcatSel]['IdSub'];
-        $subcatMod->id = $actual['IdSub'];
+        // borrar subcategoria por id
+        $subcatMod->id = $subcatToDel;
         $subcatMod->deleteSubcategoriaById();
-        //$pregMod->subca
+        // obtener array con preguntas de la subcategoria
+        $pregMod->subcategoria = $subcatToDel;
         $idsPregsSubcat = $pregMod->getPreguntaBySubcat();
-        // update categorias, preguntas, opciones para vista
+        // eliminar preguntas de la subcategoria
+        $pregMod->deletePreguntaBySubcat();
+        // eliminar opciones de las preguntas
+        // de la subcategoria
+        $opsMod->deleteOpcionesByPreguntas($idsPregsSubcat);
+        // update subcategoria y preguntas en vistas en base a la categoria 
+        // actual seleccionada 
+        $subcategorias = $subcatMod->getSubcategoriaByCat();
+        $pregMod->subcategoria = null;
+        $preguntas = $pregMod->getPreguntaByEncCatSub();
+        // desmarcar subcategoria que hemos borrado
+        unset($_SESSION['idSubcategoriaSelected']);
+        unset($_SESSION['nomSubcategoriaSelected']);
+        // como aun no se cargan las preguntas y opciones
+        // no hace falta actualizarlas aqui
     }
 }
 
@@ -280,7 +316,6 @@ if (isset($subSelSubcat)) {
 /***************************
  * formulario PREGUNTAS
  ***************************/
-$pregMod = new Pregunta($database);
 // cargar preguntas
 $pregMod->encuesta = $_SESSION['idEnc'];
 $pregMod->categoria = $_SESSION['idCategoriaSelected'];
@@ -315,7 +350,6 @@ $numOps = $_REQUEST['numOps'];
 $enunciado = trim(strip_tags($_REQUEST['enunciado']));
 $relprof = $_REQUEST['relprof'];
 $options = array();
-$opsMod = new Opcion($database);
 if (isset($numOps)) {
     // combrobaciones datos
     if ($numOps == "" || $numOps < 1) {
