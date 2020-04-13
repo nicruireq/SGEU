@@ -255,10 +255,12 @@ if (isset($subDelSubcat)) {
         $error = true;
         $errores['formEditSubcategoria'] = "Seleccione una de las categorías";
     } else {
-        $actual = $subcategorias[$subcatSel];
+        $subcatToDel = $subcategorias[$subcatSel]['IdSub'];
         $subcatMod->id = $actual['IdSub'];
         $subcatMod->deleteSubcategoriaById();
-        // update categorias para vista
+        //$pregMod->subca
+        $idsPregsSubcat = $pregMod->getPreguntaBySubcat();
+        // update categorias, preguntas, opciones para vista
     }
 }
 
@@ -313,6 +315,7 @@ $numOps = $_REQUEST['numOps'];
 $enunciado = trim(strip_tags($_REQUEST['enunciado']));
 $relprof = $_REQUEST['relprof'];
 $options = array();
+$opsMod = new Opcion($database);
 if (isset($numOps)) {
     // combrobaciones datos
     if ($numOps == "" || $numOps < 1) {
@@ -340,8 +343,6 @@ if (isset($numOps)) {
             // actualizar preguntas para la vista
             $preguntas = $pregMod->getPreguntaByEncCatSub();
             // opciones
-            //$lastPreg = $pregMod->lastInsertId();   //el id de la pregunta que acabamos de crear??
-            $opsMod = new Opcion($database);
             $opsMod->pregunta = $lastPreg;
             $opsMod->createOpcionesPregunta($options);
             // clean
@@ -356,9 +357,16 @@ if (isset($subDelPreg)) {
         $error = true;
         $errores['formEditPreg'] = "Seleccione una pregunta";
     } else {
-        // codigo para eliminar pregunta
-
+        // codigo para eliminar pregunta y sus opciones
+        $idPregToDel = $preguntas[$pregSel]['IdPreg'];
+        // borrar las opciones
+        $opsMod->pregunta = $idPregToDel;
+        $opsMod->deleteOpcionesByPregunta();
+        // borrar la pregunta
+        $pregMod->id = $idPregToDel;
+        $pregMod->deletePreguntaById();
         // actualizar preguntas en la vista
+        $preguntas = $pregMod->getPreguntaByEncCatSub();
     }
 }
 

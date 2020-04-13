@@ -41,6 +41,14 @@ class Pregunta extends Model {
         }
     }
 
+    public function getPreguntaBySubcat() {
+        $ssql = "SELECT * FROM $this->table_name
+                    WHERE Subcategoria=?;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->execute(array($this->subcategoria));
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function createPregunta()
     {
         if ($this->subcategoria) {
@@ -67,8 +75,18 @@ class Pregunta extends Model {
         return $this->lastInsertId();
     }
 
-    public function lastInsertId() {
+    private function lastInsertId() {
         return $this->conn->lastInsertId();
+    }
+
+    public function deletePreguntaById() {
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE IdPreg=?;";
+        $stmt = $this->conn->prepare($ssql);
+        return $stmt->execute(array(
+            $this->id
+        ));
     }
 
 }

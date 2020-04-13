@@ -43,6 +43,12 @@ class Subcategoria extends Model
         // borrar todas las preguntas y respuestas de la categoria
         // todas las subcategorias de la categoria
         // y finalmente la categoria
-
+        $ssql = "UPDATE $this->table_name
+                    SET IsDeleted=1
+                WHERE IdSub=?;";
+        $stmt = $this->conn->prepare($ssql);
+        return $stmt->execute(array(
+            $this->id
+        ));
     }
 }
