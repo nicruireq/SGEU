@@ -23,6 +23,16 @@ class Respuestas extends Model {
         return $this->conn->lastInsertId();
     }
 
+    public function getCountAvgStdAllEncuestasFromAsig($asig) {
+        $ssql = "SELECT RESPUESTAS.Pregunta, COUNT(OPCION.Texto),AVG(OPCION.Texto),STD(OPCION.Texto) FROM RESPUESTAS 
+                 INNER JOIN OPCION ON OPCION.IdOp=RESPUESTAS.Opcion
+                 WHERE RESPUESTAS.IdEncresp IN (SELECT ENCUESTA_RESP.IdEncresp FROM ENCUESTA_RESP WHERE ENCUESTA_RESP.Asignatura=?)
+                 GROUP BY RESPUESTAS.Pregunta;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->execute(array($asig));
+        return $stmt->fetchAll(PDO::FETCH_NUM);
+    }
+
 }
 
 ?>

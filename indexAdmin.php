@@ -1,3 +1,17 @@
+<?php
+
+error_reporting(E_ALL & ~E_NOTICE);
+session_start();
+
+// si no es un usuario logeado sale...
+if (empty($_SESSION['username'])) {
+    session_destroy();
+    header("Location: index.php", true, 301);
+    exit();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,8 +27,10 @@
   
 <div class="container p-3 my-3 border">
   <h1 class="text-center">Sistema de Gestión de Encuestas</h1>
-    <a href="encuesta.php" class="btn btn-primary btn-block" role="button">Realizar encuesta</a>
-    <a href="login.php" class="btn btn-primary btn-block" role="button">Gestión y estadísticas</a>
+  <h2 class="text-center">Zona privada</h1>
+    <a href="gestion.php" class="btn btn-primary btn-block" role="button">Gestionar encuesta</a>
+    <a href="estadisticas.php" class="btn btn-primary btn-block" role="button">Estadísticas</a>
+    <a href="logout.php" class="btn btn-primary btn-block" role="button">Cerrar sesión</a>
 </div>
 
 </body>

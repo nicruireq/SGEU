@@ -12,6 +12,16 @@ class Pregunta extends Model {
     public $relprof;
     public $subcategoria;
     public $categoria;
+
+    public function getPreguntaEnunciadoById() {
+        $ssql = "SELECT Enunciado
+                        FROM $this->table_name
+                    WHERE IdPreg=?
+                    ORDER BY Enunciado;";
+            $stmt = $this->conn->prepare($ssql);
+            $stmt->execute(array($this->id));
+            return $stmt->fetch(PDO::FETCH_NUM);
+    }
     
     public function getPreguntaByEncCatSub()    
     {

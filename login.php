@@ -52,7 +52,7 @@
                     $_SESSION['username'] = $row['Username'];
                     // redireccion permanente
                     unset($errores);
-                    header("Location: gestion.php", true, 301);
+                    header("Location: indexAdmin.php", true, 301);
                     exit();
                 } else {
                     // pass incorrecta

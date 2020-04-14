@@ -21,6 +21,16 @@ class Asignatura extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getAsignaturaNombreById() {
+        $ssql = "SELECT NombreAsig 
+                    FROM $this->table_name 
+                WHERE Tit=? AND CodAsig=?
+                ORDER BY NombreAsig;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->execute(array($this->titulacion,$this->id));
+        return $stmt->fetchAll(PDO::FETCH_NUM);
+    }
+
 }
 
 ?>
