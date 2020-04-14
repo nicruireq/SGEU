@@ -16,7 +16,7 @@ class Pregunta extends Model {
     public function getPreguntaByEncCatSub()    
     {
         if ($this->subcategoria) {
-            $ssql = "SELECT IdPreg, Enunciado 
+            $ssql = "SELECT IdPreg, Enunciado, RelacionProfesor 
                         FROM $this->table_name
                     WHERE Encuesta=? AND Subcategoria=? AND Categoria=? AND IsDeleted=0
                     ORDER BY Enunciado;";
@@ -28,7 +28,7 @@ class Pregunta extends Model {
             ));
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            $ssql = "SELECT IdPreg, Enunciado 
+            $ssql = "SELECT IdPreg, Enunciado, RelacionProfesor 
                     FROM $this->table_name
                 WHERE Encuesta=? AND Categoria=? AND IsDeleted=0
                 ORDER BY Enunciado;";
@@ -41,8 +41,16 @@ class Pregunta extends Model {
         }
     }
 
+    public function getPreguntaBycat() {
+        $ssql = "SELECT IdPreg, Enunciado, RelacionProfesor FROM $this->table_name
+                    WHERE Categoria=? AND Subcategoria IS NULL AND IsDeleted=0;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->execute(array($this->categoria));
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getPreguntaBySubcat() {
-        $ssql = "SELECT IdPreg, Enunciado FROM $this->table_name
+        $ssql = "SELECT IdPreg, Enunciado, RelacionProfesor FROM $this->table_name
                     WHERE Subcategoria=? AND IsDeleted=0;";
         $stmt = $this->conn->prepare($ssql);
         $stmt->execute(array($this->subcategoria));
@@ -72,10 +80,6 @@ class Pregunta extends Model {
             $stmt->execute();
         }
 
-        return $this->lastInsertId();
-    }
-
-    private function lastInsertId() {
         return $this->conn->lastInsertId();
     }
 

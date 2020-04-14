@@ -6,5 +6,3 @@
         echo '<div class="alert alert-danger">' .
                 $err[$index] . '</div>';
     }
-
-?>

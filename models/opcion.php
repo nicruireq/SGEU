@@ -10,6 +10,15 @@ class Opcion extends Model {
     public $texto;
     public $pregunta;
     
+    public function getOpcionByPreg() {
+        $ssql = "SELECT IdOp,Texto,Pregunta
+                    FROM $this->table_name
+                WHERE Pregunta=? AND IsDeleted=0;";
+        $stmt = $this->conn->prepare($ssql);
+        $stmt->execute(array($this->pregunta));
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * introduce todas las opciones del array $ops
      * en la tabla
