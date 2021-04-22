@@ -4,8 +4,8 @@ class Database {
 
     private $conn;  // PDO Object
     private $dsn = 'mysql:host=127.0.0.1;dbname=sgeu';
-    private $user = 'pwusr';
-    private $pass = 'clase2020';
+    private $user = '';
+    private $pass = '';
 
     public function __construct()
     {
